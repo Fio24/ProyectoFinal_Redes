@@ -8,6 +8,60 @@
 #define BUF_SIZE 4096
 #define DNS_PORT 53
 
+// Estructura del encabezado DNS
+typedef struct {
+    unsigned short id;
+    unsigned char qr_opcode_aa_tc_rd;
+    unsigned char ra_z_rcode;
+    unsigned short qdcount;
+    unsigned short ancount;
+    unsigned short nscount;
+    unsigned short arcount;
+} DNSHeader;
+
+typedef struct {
+    unsigned short type;
+    unsigned short class;
+    unsigned int ttl;
+    unsigned short rdlength;
+    unsigned char rdata[4];
+} DNSRecord;
+
+// Función para enviar una respuesta DNS
+void send_dns_response(int sockfd, struct sockaddr_in* cliaddr, DNSHeader* dnsHeader) {
+    // Preparamos la respuesta DNS
+    DNSHeader responseHeader;
+    memset(&responseHeader, 0, sizeof(responseHeader));
+    
+    // Copiamos el ID de la consulta original al ID de la respuesta
+    responseHeader.id = dnsHeader->id;
+    // Configuramos el bit de respuesta (QR = 1)
+    responseHeader.qr_opcode_aa_tc_rd = (1 << 7);
+     responseHeader.ra_z_rcode = 0;  // Establecer el campo "ra_z_rcode" a cero para indicar éxito
+    responseHeader.qdcount = dnsHeader->qdcount;  // Igualamos la cantidad de consultas del encabezado original
+    responseHeader.ancount = htons(1);  // Por ejemplo, aquí se establece un solo registro de respuesta   
+    responseHeader.nscount = htons(0);  // No se incluyen registros de autoridad en este ejemplo
+    responseHeader.arcount = 0;  // No se incluyen registros adicionales en este ejemplo
+
+    // Crear una respuesta de ejemplo con un registro de respuesta A
+    DNSRecord answer;
+    answer.type = htons(1);  // Tipo A
+    answer.class = htons(1);  // Clase IN
+    answer.ttl = htonl(3600);  // TTL de 3600 segundos
+    answer.rdlength = htons(4);  // Longitud de los datos de respuesta (dirección IPv4 de 4 bytes)
+    inet_pton(AF_INET, "192.0.2.1", answer.rdata);  // Dirección IPv4 de ejemplo
+
+
+    // Enviamos la respuesta al cliente
+    ssize_t sentBytes = sendto(sockfd, (const char*)&answer, sizeof(answer), 0, (struct sockaddr*)cliaddr, sizeof(struct sockaddr_in));
+    if (sentBytes == -1) {
+        perror("Error al enviar la respuesta DNS");
+        exit(EXIT_FAILURE);
+    }
+    
+    printf("Respuesta DNS enviada al cliente\n");
+}
+
 int main() {
     int sockfd;
     struct sockaddr_in servaddr, cliaddr;
@@ -64,13 +118,19 @@ int main() {
             int isStandardQuery = (qr == 0x01) && (opcode == 0x00);
 
 
-
+  // Analizamos el paquete DNS
+        DNSHeader* dnsHeader = (DNSHeader*)buffer;
+        
         if (!isStandardQuery) { //se realiza el caso 1
             printf("Paquete DNS: Diferente a una consulta estándar\n");
         } else { //se realiza caso 2
             
             printf("Paquete DNS: Consulta estándar recibida\n");
         }
+
+        // Enviamos una respuesta DNS al cliente
+        send_dns_response(sockfd, &cliaddr, dnsHeader);
+        
     }
 
     // Cerramos el socket
