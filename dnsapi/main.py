@@ -2,7 +2,7 @@ import csv
 import ipaddress
 import time
 
-from flask import Flask, request
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 import json
@@ -12,7 +12,7 @@ from firebase_admin import firestore
 from random import randint
 cred = credentials.Certificate("serviceAccountKey.json")
 
-
+collection = 'urls'
 app2 = firebase_admin.initialize_app(cred)
 
 db = firestore.client()
@@ -171,10 +171,102 @@ def db_write3():
     return "Succesful"
 
 
+@app.route('/getAll', methods=['GET'])
+def get_all():
 
 
+    try:
+        collection_ref = db.collection(collection)
+        documents = collection_ref.get()
+
+        # Process the retrieved documents
+        document_list = []
+        for doc in documents:
+            document_data = doc.to_dict()
+            document_list.append(document_data)
+
+        return jsonify({'success': True, 'documents': document_list})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/get/<url>', methods=['GET'])
+def getDocument(url):
+    try:
+        # Get a reference to the document
+        doc_ref = db.collection(collection).document(url)
+
+        # Retrieve the document
+        doc = doc_ref.get()
+
+        if doc.exists:
+            document_data = doc.to_dict()
+            return jsonify({'success': True, 'document': document_data})
+        else:
+            return jsonify({'success': False, 'message': 'Document not found'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
+@app.route('/update', methods=['POST'])
+def update():
+    try:
+        ## get url to update
+        data = request.get_json()
+        url = data['url']
+        document = data['document']
+
+        doc_ref = db.collection(collection).document(url)
+        doc_ref.update(document)
+
+        updated_doc = doc_ref.get()
+        if updated_doc.exists:
+            return jsonify({'success': True, 'message': 'Document updated successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to update the document'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/new', methods=['PUT'])
+def new():
+    try:
+        data = request.get_json()
+        url = data['url']
+        document = data['document']
+
+        doc_ref = db.collection(collection).document(url)
+        doc_ref.set(document)
+
+        # Check if the document was created successfully
+        created_doc = doc_ref.get()
+        if created_doc.exists:
+            return jsonify({'success': True, 'message': 'Document created successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to create the document'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/del', methods=['DELETE'])
+def delete():
+    try:
+        # Get data from request JSON
+        data = request.get_json()
+        url = data['url']
+
+        # Get a reference to the document
+        doc_ref = db.collection(collection).document(url)
+        
+        # Delete the document
+        doc_ref.delete()
+
+        # Check if the document was successfully deleted
+        deleted_doc = doc_ref.get()
+        if not deleted_doc.exists:
+            return jsonify({'success': True, 'message': 'Document deleted successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to delete the document'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 if __name__ == '__main__':
