@@ -4,56 +4,128 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <stdint.h> // Para tipos de datos enteros de tamaño fijo
 
 #define BUF_SIZE 4096
 #define DNS_PORT 53
+// Tamaño máximo del nombre de dominio
+#define MAX_DOMAIN_NAME_LENGTH 256
 
-// Estructura del encabezado DNS
-typedef struct {
-    unsigned short id;
-    unsigned char qr_opcode_aa_tc_rd;
-    unsigned char ra_z_rcode;
-    unsigned short qdcount;
-    unsigned short ancount;
-    unsigned short nscount;
-    unsigned short arcount;
-} DNSHeader;
+// Estructura para almacenar un registro DNS
+struct DNSHeader {
+    uint16_t id;
+    uint16_t flags;
+    uint16_t qdcount;
+    uint16_t ancount;
+    uint16_t nscount;
+    uint16_t arcount;
+};
 
-typedef struct {
-    unsigned short type;
-    unsigned short class;
-    unsigned int ttl;
-    unsigned short rdlength;
-    unsigned char rdata[4];
-} DNSRecord;
+// Estructura para almacenar un respuesta DNS 
+struct DNSResponse {
+    uint16_t name;
+    uint16_t type;
+    uint16_t class;
+    uint16_t ttl;
+    uint16_t rdlength;
+    uint32_t rdata;
+};
+
+// Función para extraer el nombre de dominio de la consulta DNS
+void extract_domain_name(const unsigned char* buffer, int offset, char* domain_name) {
+    int i = 0;
+    int j = 0;
+    int k = 0;
+    while (buffer[offset + i] != 0) {
+        if (i != 0) {
+            domain_name[j++] = '.';
+        }
+        for (k = 0; k < buffer[offset + i]; k++) {
+            domain_name[j++] = buffer[offset + i + k + 1];
+        }
+        i += buffer[offset + i] + 1;
+    }
+    domain_name[j] = '\0';
+}
+
+// Función para extraer la dirección IP de la consulta DNS
+void extract_ip_address(const unsigned char* buffer, int offset, char* ip_address) {
+    sprintf(ip_address, "%u.%u.%u.%u", buffer[offset], buffer[offset + 1], buffer[offset + 2], buffer[offset + 3]);
+}
 
 // Función para enviar una respuesta DNS
-void send_dns_response(int sockfd, struct sockaddr_in* cliaddr, DNSHeader* dnsHeader) {
+void send_dns_response(int sockfd, struct sockaddr_in* cliaddr) {
     // Preparamos la respuesta DNS
-    DNSHeader responseHeader;
+    // Declaración de la estructura
+    struct DNSResponse responseHeader;
     memset(&responseHeader, 0, sizeof(responseHeader));
-    
-    // Copiamos el ID de la consulta original al ID de la respuesta
-    responseHeader.id = dnsHeader->id;
-    // Configuramos el bit de respuesta (QR = 1)
-    responseHeader.qr_opcode_aa_tc_rd = (1 << 7);
-     responseHeader.ra_z_rcode = 0;  // Establecer el campo "ra_z_rcode" a cero para indicar éxito
-    responseHeader.qdcount = dnsHeader->qdcount;  // Igualamos la cantidad de consultas del encabezado original
-    responseHeader.ancount = htons(1);  // Por ejemplo, aquí se establece un solo registro de respuesta   
-    responseHeader.nscount = htons(0);  // No se incluyen registros de autoridad en este ejemplo
-    responseHeader.arcount = 0;  // No se incluyen registros adicionales en este ejemplo
+  
+    // Asignar valores al registro de recursos DNS
 
-    // Crear una respuesta de ejemplo con un registro de respuesta A
-    DNSRecord answer;
-    answer.type = htons(1);  // Tipo A
-    answer.class = htons(1);  // Clase IN
-    answer.ttl = htonl(3600);  // TTL de 3600 segundos
-    answer.rdlength = htons(4);  // Longitud de los datos de respuesta (dirección IPv4 de 4 bytes)
-    inet_pton(AF_INET, "192.0.2.1", answer.rdata);  // Dirección IPv4 de ejemplo
+                // Definir el nombre como una cadena de etiquetas de texto ASCII
+                const char* domainName = "example.com";
+
+                // Crear un buffer temporal para almacenar el nombre en formato DNS
+                uint8_t nameBuffer[MAX_DOMAIN_NAME_LENGTH];
+                size_t offset = 0;
+
+                const char* label = strtok(domainName, ".");
+                while (label != NULL) {
+                    // Obtener la longitud de la etiqueta
+                    size_t labelLength = strlen(label);
+
+                    // Verificar si el tamaño del buffer es suficiente para la etiqueta y el byte de longitud
+                    if (offset + labelLength + 1 >= MAX_DOMAIN_NAME_LENGTH) {
+                        printf("El tamaño del buffer no es suficiente para almacenar el nombre completo.\n");
+                        return -1; // Salir o manejar el error según tus necesidades
+                    }
+
+                    // Copiar la longitud de la etiqueta en el buffer
+                    nameBuffer[offset] = labelLength;
+
+                    // Copiar la etiqueta en el buffer
+                    memcpy(nameBuffer + offset + 1, label, labelLength);
+
+                    // Actualizar el desplazamiento en el buffer
+                    offset += labelLength + 1;
+
+                    // Obtener la siguiente etiqueta
+                    label = strtok(NULL, ".");
+                }
+
+                // Agregar el byte nulo al final del nombre en el buffer
+                nameBuffer[offset] = 0;
+
+                // Convertir el nombre al formato de red
+                responseHeader.name = htons(offset);
+
+                // Copiar el nombre en el campo name de la estructura
+                memcpy((uint8_t*)&responseHeader + sizeof(responseHeader), nameBuffer, offset + 1);
+
+
+    responseHeader.type = htons(1); // Tipo A
+    responseHeader.class = htons(1); // Clase IN
+    responseHeader.ttl = htonl(3600);
+    responseHeader.rdlength = htons(4);
+    // Convertir la dirección IP de cadena a formato de red y asignarla a rdata
+    if (inet_pton(AF_INET, "192.111.0.1", &(responseHeader.rdata)) != 1) {
+        perror("Error al convertir la dirección IP");
+        exit(EXIT_FAILURE);
+    }
 
 
     // Enviamos la respuesta al cliente
-    ssize_t sentBytes = sendto(sockfd, (const char*)&answer, sizeof(answer), 0, (struct sockaddr*)cliaddr, sizeof(struct sockaddr_in));
+    ssize_t sentBytes = 
+    sendto(
+        sockfd, 
+        &responseHeader, 
+        sizeof(responseHeader), 
+        0, 
+        (struct sockaddr*)cliaddr, 
+        sizeof(struct sockaddr_in)
+    );
+
+   
     if (sentBytes == -1) {
         perror("Error al enviar la respuesta DNS");
         exit(EXIT_FAILURE);
@@ -99,28 +171,60 @@ int main() {
         // Analizamos el paquete DNS
         // Implementamos la lógica para examinar el paquete según el RFC2929  (TODO)
 
+        unsigned char header2 = buffer[2];
 
+        // Extraemos el campo QR (bit más significativo del byte 2)
+        int qr = (header2 >> 7) & 0x01;
+
+        // Extraemos el campo OPCODE (bits 3 a 6 del byte 2)
+        int opcode = (header2 >> 3) & 0x0F;
+
+        // Verificamos si es una consulta estándar (QR = 1 y OPCODE = 0)
+        int isStandardQuery = (qr == 0x01) && (opcode == 0x00);
         
-        /*
-        * Verificamos si el paquete DNS es una consulta estándar o no
-        */
+        // Declaración de la estructura
+        struct DNSHeader header;
 
-            // Obtenemos el tercer byte del paquete DNS (encabezado)
-            unsigned char header = buffer[2];
+            // Copiar los valores del buffer a la estructura utilizando desplazamiento de bits
+            header.id = (buffer[0] << 8) | buffer[1];
+            header.flags = (buffer[2] << 8) | buffer[3];
+            header.qdcount = (buffer[4] << 8) | buffer[5];
+            header.ancount = (buffer[6] << 8) | buffer[7];
+            header.nscount = (buffer[8] << 8) | buffer[9];
+            header.arcount = (buffer[10] << 8) | buffer[11];
 
-            // Extraemos el campo QR (bit más significativo del byte 2)
-            int qr = (header >> 7) & 0x01;
-
-            // Extraemos el campo OPCODE (bits 3 a 6 del byte 2)
-            int opcode = (header >> 3) & 0x0F;
-
-            // Verificamos si es una consulta estándar (QR = 1 y OPCODE = 0)
-            int isStandardQuery = (qr == 0x01) && (opcode == 0x00);
-
-
-  // Analizamos el paquete DNS
-        DNSHeader* dnsHeader = (DNSHeader*)buffer;
+            // Imprimir los valores de la estructura
+            printf("ID: %d\n", header.id);
+            printf("QR: %d\n", (header.flags >> 15) & 0x01);
+            printf("Opcode: %d\n", (header.flags >> 11) & 0x0F);
+            printf("AA: %d\n", (header.flags >> 10) & 0x01);
+            printf("TC: %d\n", (header.flags >> 9) & 0x01);
+            printf("RD: %d\n", (header.flags >> 8) & 0x01);
+            printf("RA: %d\n", (header.flags >> 7) & 0x01);
+            printf("Z: %d\n", (header.flags >> 4) & 0x07);
+            printf("AD: %d\n", (header.flags >> 3) & 0x01);
+            printf("CD: %d\n", (header.flags >> 2) & 0x01);
+            printf("RCODE: %d\n", header.flags & 0x0F);
+            printf("QDCOUNT: %d\n", header.qdcount);
+            printf("ANCOUNT: %d\n", header.ancount);
+            printf("NSCOUNT: %d\n", header.nscount);
+            printf("ARCOUNT: %d\n", header.arcount);
         
+        // Extraer el nombre de dominio de la consulta DNS
+        char domain_name[MAX_DOMAIN_NAME_LENGTH];
+        extract_domain_name(buffer, 12, domain_name);
+        printf("Nombre de dominio consultado: %s\n", domain_name);
+
+        // Extraer la dirección IP de la consulta DNS
+        char ip_address[INET_ADDRSTRLEN];
+        extract_ip_address(buffer, 12 + strlen(domain_name) + 2, ip_address);
+        printf("Dirección IP consultada: %s\n", ip_address);
+
+        // Obtener la dirección IP de origen
+        char clientIP[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &(cliaddr.sin_addr), clientIP, INET_ADDRSTRLEN);
+        printf("IP de origen: %s\n", clientIP);
+
         if (!isStandardQuery) { //se realiza el caso 1
             printf("Paquete DNS: Diferente a una consulta estándar\n");
         } else { //se realiza caso 2
@@ -129,7 +233,7 @@ int main() {
         }
 
         // Enviamos una respuesta DNS al cliente
-        send_dns_response(sockfd, &cliaddr, dnsHeader);
+        send_dns_response(sockfd, &cliaddr);
         
     }
 
