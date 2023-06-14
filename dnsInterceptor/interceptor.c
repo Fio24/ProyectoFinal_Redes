@@ -23,13 +23,37 @@ struct DNSHeader {
 
 // Estructura para almacenar un respuesta DNS 
 struct DNSResponse {
-    uint16_t name;
+    uint64_t name;
     uint16_t type;
     uint16_t class;
     uint16_t ttl;
     uint16_t rdlength;
     uint32_t rdata;
 };
+
+/*
+ * This will convert www.google.com to 3www6google3com 
+ * got it :)
+ * */
+void ChangetoDnsNameFormat(unsigned char* dns,unsigned char* host) 
+{
+	int lock = 0 , i;
+	strcat((char*)host,".");
+	
+	for(i = 0 ; i < strlen((char*)host) ; i++) 
+	{
+		if(host[i]=='.') 
+		{
+			*dns++ = i-lock;
+			for(;lock<i;lock++) 
+			{
+				*dns++=host[lock];
+			}
+			lock++; //or lock=i+1;
+		}
+	}
+	*dns++='\0';
+}
 
 // Función para extraer el nombre de dominio de la consulta DNS
 void extract_domain_name(const unsigned char* buffer, int offset, char* domain_name) {
@@ -62,47 +86,17 @@ void send_dns_response(int sockfd, struct sockaddr_in* cliaddr) {
   
     // Asignar valores al registro de recursos DNS
 
-                // Definir el nombre como una cadena de etiquetas de texto ASCII
-                const char* domainName = "example.com";
+    const char* domainName = "example.com";
+    uint64_t name = 0;
 
-                // Crear un buffer temporal para almacenar el nombre en formato DNS
-                uint8_t nameBuffer[MAX_DOMAIN_NAME_LENGTH];
-                size_t offset = 0;
+    for (int i = 0; i < strlen(domainName); i++) {
+        // Agregar el valor ASCII del carácter al entero utilizando una operación OR
+        name |= (uint64_t)domainName[i];
+        // Realizar el corrimiento de bits a la izquierda para dar espacio al siguiente carácter
+        name <<= 8;
+    }
 
-                const char* label = strtok(domainName, ".");
-                while (label != NULL) {
-                    // Obtener la longitud de la etiqueta
-                    size_t labelLength = strlen(label);
-
-                    // Verificar si el tamaño del buffer es suficiente para la etiqueta y el byte de longitud
-                    if (offset + labelLength + 1 >= MAX_DOMAIN_NAME_LENGTH) {
-                        printf("El tamaño del buffer no es suficiente para almacenar el nombre completo.\n");
-                        return -1; // Salir o manejar el error según tus necesidades
-                    }
-
-                    // Copiar la longitud de la etiqueta en el buffer
-                    nameBuffer[offset] = labelLength;
-
-                    // Copiar la etiqueta en el buffer
-                    memcpy(nameBuffer + offset + 1, label, labelLength);
-
-                    // Actualizar el desplazamiento en el buffer
-                    offset += labelLength + 1;
-
-                    // Obtener la siguiente etiqueta
-                    label = strtok(NULL, ".");
-                }
-
-                // Agregar el byte nulo al final del nombre en el buffer
-                nameBuffer[offset] = 0;
-
-                // Convertir el nombre al formato de red
-                responseHeader.name = htons(offset);
-
-                // Copiar el nombre en el campo name de la estructura
-                memcpy((uint8_t*)&responseHeader + sizeof(responseHeader), nameBuffer, offset + 1);
-
-
+    responseHeader.name = name; // Nombre de dominio comprimido
     responseHeader.type = htons(1); // Tipo A
     responseHeader.class = htons(1); // Clase IN
     responseHeader.ttl = htonl(3600);
@@ -125,7 +119,28 @@ void send_dns_response(int sockfd, struct sockaddr_in* cliaddr) {
         sizeof(struct sockaddr_in)
     );
 
-   
+    // Enviamos la respuesta al cliente
+    sentBytes = 
+    sendto(
+        sockfd, 
+        &responseHeader, 
+        sizeof(responseHeader), 
+        0, 
+        (struct sockaddr*)cliaddr, 
+        sizeof(struct sockaddr_in)
+    );
+
+        // Enviamos la respuesta al cliente
+    sentBytes = 
+    sendto(
+        sockfd, 
+        &responseHeader, 
+        sizeof(responseHeader), 
+        0, 
+        (struct sockaddr*)cliaddr, 
+        sizeof(struct sockaddr_in)
+    );
+
     if (sentBytes == -1) {
         perror("Error al enviar la respuesta DNS");
         exit(EXIT_FAILURE);
