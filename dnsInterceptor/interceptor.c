@@ -60,8 +60,8 @@ int main() {
             // Extraemos el campo OPCODE (bits 3 a 6 del byte 2)
             int opcode = (header >> 3) & 0x0F;
 
-            // Verificamos si es una consulta estándar (QR = 1 y OPCODE = 0)
-            int isStandardQuery = (qr == 0x01) && (opcode == 0x00);
+            // Verificamos si es una consulta estándar (QR = 0 y OPCODE = 0)
+            int isStandardQuery = (qr == 0x00) && (opcode == 0x00);
 
 
 
