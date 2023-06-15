@@ -17,11 +17,11 @@
     </span>
     <span>
         <label >URL</label>
-        <input>
+        <input name="url" [(ngModel)]="url" >
     </span>
     <span *ngIf="type === 'single'">
-        <label >Server</label>
-        <input>
+        <label  >Server</label>
+        <input name="server"  [(ngModel)]="server">
     </span>
     
 
@@ -32,11 +32,7 @@
           <input
             type="text"
             [name]="'email'+i"
-            autocomplete="off"
-            placeholder="Correo electrónico"
             [(ngModel)]="servers[i]"
-            class="mr-5"
-            pInputText
           />
 
           <button (click)="removeServer(i)">Eliminar</button>
@@ -80,4 +76,7 @@
         </div>
         
       </div>
+      <span>
+        <button (click)="AddRegister()">crear</button>
+      </span>
 </div>

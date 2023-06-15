@@ -18,7 +18,7 @@ export class DNSRegitsterFormComponent implements OnInit {
   serversWeight:any[] = []
   type:string = "single";
   url:string = "";
-  server:string = "";
+  server:string = "0.0.0.0";
 
   ngOnInit(): void {
     
@@ -41,6 +41,15 @@ export class DNSRegitsterFormComponent implements OnInit {
   }
 
   AddRegister(){
+    const register = this.getRegisterJson();
+    console.log(register)
+    this.dns.new(register).subscribe((data) =>{
+      console.log(data)
+    })
+  }
+
+  
+  getRegisterJson(){
     var register = {}
     if(this.type === "single"){
       register = {
@@ -59,7 +68,7 @@ export class DNSRegitsterFormComponent implements OnInit {
         "document" : {
             
             "type": this.type,
-            "servers": this.server
+            "servers": this.servers
           }       
         }
     }
@@ -74,7 +83,7 @@ export class DNSRegitsterFormComponent implements OnInit {
           }       
         }
     }
-  
+
 
     else if(this.type === "geo"){
       register = {
@@ -82,9 +91,10 @@ export class DNSRegitsterFormComponent implements OnInit {
         "document" : {
             
             "type": this.type,
-            
+            "Dummy":"www.dummy.com"
           }       
         }
     }
+    return register
   }
 }

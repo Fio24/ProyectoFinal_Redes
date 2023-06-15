@@ -32,4 +32,12 @@ export class HomeComponent implements OnInit {
     this.router.navigateByUrl('/new');
   }
 
+  del(url:string){
+    this.dns.delete(url)
+    .subscribe((data:any)=>{;
+      console.log(data)
+      this.loadRegisters()
+    })
+  }
+
 }
