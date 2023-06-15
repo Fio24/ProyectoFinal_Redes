@@ -15,7 +15,7 @@ respuesta = None
 
 try:
     # Realiza la consulta DNS
-    respuesta = resolver.resolve('example.com', 'A')
+    respuesta = resolver.resolve('esteban.com', 'A')
 except dns.exception.DNSException as e:
     import traceback
     traceback.print_exc()

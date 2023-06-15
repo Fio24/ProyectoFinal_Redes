@@ -21,7 +21,7 @@
 
 // Estructura para almacenar un respuesta DNS 
 struct Query {    
-    char* name;
+    char* name; // 255 bytes
     uint16_t type;
     uint16_t class;
 };
@@ -301,7 +301,7 @@ int main() {
         // Establecer el bit RA en 1
       //  header.ancount = htons(1);
 
-/*
+
         struct Query query;
         memset(&query, 0, sizeof(query));
 
