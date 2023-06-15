@@ -182,8 +182,10 @@ def get_all():
         # Process the retrieved documents
         document_list = []
         for doc in documents:
+            document_id = doc.id
             document_data = doc.to_dict()
-            document_list.append(document_data)
+            newDoc = {'id': document_id, 'data':document_data}
+            document_list.append(newDoc)
 
         return jsonify({'success': True, 'documents': document_list})
     except Exception as e:
