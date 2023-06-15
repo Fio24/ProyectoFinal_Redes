@@ -1,0 +1,83 @@
+<div style="display: grid;">
+
+    <span>
+        <label>multi</label>
+        <input type="radio" (click)="type = 'multi'" id="type" name="type"
+                         value="multi" checked>
+        <label>weight</label>
+        <input type="radio" (click)="type = 'weight'" id="type" name="type"
+                        value="weight" checked>
+        <label>geo</label>
+        <input type="radio" (click)="type = 'geo'" id="type" name="type"
+                            value="geo" checked>
+
+        <label>single</label>
+        <input type="radio" (click)="type = 'single'" id="type" name="type"
+                            value="single" checked>
+    </span>
+    <span>
+        <label >URL</label>
+        <input>
+    </span>
+    <span *ngIf="type === 'single'">
+        <label >Server</label>
+        <input>
+    </span>
+    
+
+    <div *ngIf="type === 'multi'" class="field in-line">
+        <label for="members" class="form-label font">Servers</label>
+        <div class="flex mb-3 " *ngFor="let server of servers; let i = index">
+          
+          <input
+            type="text"
+            [name]="'email'+i"
+            autocomplete="off"
+            placeholder="Correo electrónico"
+            [(ngModel)]="servers[i]"
+            class="mr-5"
+            pInputText
+          />
+
+          <button (click)="removeServer(i)">Eliminar</button>
+
+        </div>
+        <div >
+          <button (click)="addServer()">Agregar server</button>
+        </div>
+        
+      </div>
+
+      <div *ngIf="type === 'weight'" class="field in-line">
+        <label for="members" class="form-label font">Servers con peso</label>
+        <div class="flex mb-3 " *ngFor="let server of serversWeight; let i = index">
+          
+          <input
+            type="text"
+            [name]="'email'+i"
+            autocomplete="off"
+            placeholder="IP"
+            [(ngModel)]="serversWeight[i].server"
+            class="mr-5"
+            pInputText
+          />
+          <input
+            type="text"
+            [name]="'email'+i"
+            autocomplete="off"
+            placeholder="Peso"
+            [(ngModel)]="serversWeight[i].w"
+            class="mr-5"
+            pInputText
+          />
+
+
+          <button (click)="removeServerWeight(i)">Eliminar</button>
+
+        </div>
+        <div >
+          <button (click)="addServerWeight()">Agregar server</button>
+        </div>
+        
+      </div>
+</div>
