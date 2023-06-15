@@ -9,7 +9,9 @@ def send_dns_query(hostname, port):
     udp_socket.connect(server_address)
     
     # Envía la consulta DNS
-    query = hostname.encode('utf-8')
+    query = b'000100000001000000000000076578616d706c6503636f6d00010001'
+    
+    
     udp_socket.send(query)
     
     # Recibe la respuesta
@@ -23,7 +25,47 @@ def send_dns_query(hostname, port):
 
 # Ejemplo de uso
 hostname = 'examplesss.com'  # Reemplaza con el nombre de dominio o dirección IP a consultar
-port = 8080  # Reemplaza con el puerto personalizado configurado en tu programa en Python
+port = 53  # Reemplaza con el puerto personalizado configurado en tu programa en Python
 
 response = send_dns_query(hostname, port)
 print(response)
+
+'''
+--Header
+xem\xe1lp
+\x00\x01ssc.
+\x00\x00
+\x00\x00
+\xdcQ\xcd
+\xf2\xfd
+\x7f\x00
+\x00\x00
+\x01\x00
+\x01\x00
+\x00\x00
+\x00\xc0
+\x0c\x00
+\x01\x00
+\x01\x0e
+\x10\x00
+\x04\x00
+\x00\xc0o
+\x00\x01
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

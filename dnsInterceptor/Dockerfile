@@ -26,3 +26,4 @@ CMD ./live
 # echo Hola, esto es un paquete DNS | nslookup -port=53 127.0.0.1
 #
 
+# echo -n "example.com" | nc -u localhost 53
