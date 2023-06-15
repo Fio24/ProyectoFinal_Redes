@@ -1,21 +1,25 @@
+import base64
+import dns.query
 import csv
 import ipaddress
 import time
 
 from flask import Flask, jsonify, request
-
-app = Flask(__name__)
 import json
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 from random import randint
+app = Flask(__name__)
+
 cred = credentials.Certificate("serviceAccountKey.json")
 
 collection = 'urls'
 app2 = firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+with open('remote_dns_server.txt', 'r') as file:
+    DNS_EXTERNAL_SERVER=file.read().strip()
 
 def process_geo(curr_doc, requested_ip_str):
     requested_ip = ipaddress.IPv4Address(requested_ip_str) #Transforma la ip a un tipo específico para compararla
@@ -90,6 +94,24 @@ def dns_resolver():
         print('No such document!')
         return "No"
 
+@app.route('/dns_request', methods=['POST'])
+def dns_request():
+    query_data_base64 = request.get_data()
+
+    # Decodificar datos base64
+    query_data = base64.b64decode(query_data_base64)
+
+    #query_data = dns.message.from_wire(query_data)
+
+    # Enviar query a server dns
+    response = dns.query.udp(query_data, DNS_EXTERNAL_SERVER)
+
+    # Codificar datos base64
+    #response = response.to_wire()
+    response_data_base64 = base64.b64encode(response).decode('utf-8')
+
+    #return response_data_base64, 200, {'Content-Type': 'application/dns-message'}
+    return response_data_base64
 
 
 
@@ -112,6 +134,46 @@ def db_write4():
         'reg_type': "single"
     })
     return "Succesful"
+
+
+@app.route('/api/upload_dbip2', methods=['POST'])
+def upload_CTIP_ranges():
+    with open('dbip.csv', 'r') as file:
+        csv_data = csv.reader(file)
+        counter = 0
+        line_number = 0
+        #ranges = [(179810, 179910), (231000, 234700), (275290, 276290)]
+        ranges = [(232106, 234700), (275290, 276290)]
+
+        for row in csv_data:
+            line_number += 1
+            if line_number < ranges[0][0]:
+                continue  # Skip lines before the first range
+
+            if ranges and line_number > ranges[0][1]:
+                ranges.pop(0)  # Remove the processed range
+
+            if not ranges:
+                break  # Stop processing when all ranges are processed
+
+            counter += 1
+            print(counter)
+            start_ip = row[0]
+            end_ip = row[1]
+            countryid = row[2]
+
+            start_ip = ipaddress.IPv4Address(start_ip)
+            end_ip = ipaddress.IPv4Address(end_ip)
+
+            doc_ref = db.collection('country_ip').document()
+            doc_ref.set({
+                'start_ip': str(start_ip),
+                'end_ip': str(end_ip),
+                'country': countryid
+            })
+    return "Success"
+
+
 
 @app.route('/api/upload_dbip', methods=['POST'])
 def upload_CTIP():
@@ -270,4 +332,4 @@ def delete():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0')
