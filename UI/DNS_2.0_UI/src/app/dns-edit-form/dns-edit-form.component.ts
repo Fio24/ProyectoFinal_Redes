@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { DnsService } from '../dns.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-dns-edit-form',
@@ -7,14 +9,43 @@ import { Component, OnInit } from '@angular/core';
 })
 export class DnsEditFormComponent implements OnInit {
 
-  constructor() { }
+  constructor(
+    public dns: DnsService,
+    public router: Router,
+    private route: ActivatedRoute
+  ) { }
 
   servers:string[] = []
-  serversWeight:[string, number][] = []
+  serversWeight:any[] = []
   type:string = "single";
+  url:string = "";
+  server:string = "0.0.0.0";
+  id:any = ""
+  
 
   ngOnInit(): void {
-    
+    this.id = this.route.snapshot.paramMap.get('id');
+    this.getData()
+  }
+
+  getData(){
+    this.dns.getById(this.id).subscribe( (data:any) =>{
+      console.log(data)
+      this.type = data.document.type;
+      if(this.type === "single"){
+        this.url = this.id;
+        this.server = data.document.server
+
+      }
+      if(this.type === "multi"){
+        this.url = this.id;
+        this.servers = data.document.servers
+      }
+      if(this.type === "weight"){
+        this.url = this.id;
+        this.serversWeight = data.document.servers
+      }
+    })
   }
 
   removeServer(index:number){
@@ -31,6 +62,68 @@ export class DnsEditFormComponent implements OnInit {
 
   addServerWeight(){
     this.serversWeight.push(["0.0.0.0", 0])
+  }
+
+  updateRegister(){
+    const register = this.getRegisterJson();
+    console.log(register)
+    this.dns.update(register).subscribe((data:any) =>{
+      console.log(data)
+      alert(data.message)
+      if(data.success){
+        this.router.navigate(['/']);
+      }
+    })
+  }
+
+   
+  getRegisterJson(){
+    var register = {}
+    if(this.type === "single"){
+      register = {
+        "url": this.url,
+        "document" : {
+            
+            "type": this.type,
+            "server": this.server
+            
+        }
+      }
+    }
+    else if(this.type === "multi"){
+      register = {
+        "url": this.url,
+        "document" : {
+            
+            "type": this.type,
+            "servers": this.servers
+          }       
+        }
+    }
+
+    else if(this.type === "weight"){
+      register = {
+        "url": this.url,
+        "document" : {
+            
+            "type": this.type,
+            "servers": this.serversWeight
+          }       
+        }
+    }
+
+
+    else if(this.type === "geo"){
+      register = {
+        "url": this.url,
+        "document" : {
+            
+            "type": this.type,
+            "Dummy":"www.dummy.com"
+          }       
+        }
+    }
+    return register
   }
 
 }

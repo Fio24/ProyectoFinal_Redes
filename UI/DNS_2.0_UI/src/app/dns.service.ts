@@ -35,6 +35,18 @@ export class DnsService {
     .delete("/api/del",options )
     .pipe(take(1))
   }
+
+  getById(id:string){
+    return this.httpClient
+    .get(`/api/get/${id}`)
+    .pipe(take(1))
+  }
+
+  update( register:any){
+    return this.httpClient
+    .post("/api/update", register)
+    .pipe(take(1))
+  }
 }
 
 

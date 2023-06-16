@@ -1,5 +1,5 @@
 <h1>DNS<H1>
-<button routerLink="/new">Nuevo registro</button>
+<button class="button-8" routerLink="/new">Nuevo registro</button>
 <table class="table table-bordered">
 <thead>
     <tr>
@@ -13,9 +13,9 @@
         </td>
         <td >{{register.data.type}}
         </td>
-        <td ><button>Editar</button>
+        <td ><button class="button-8" routerLink="/edit/{{register.id}}">Editar</button>
         </td>
-        <td ><button (click)="del(register.id)">Eliminar</button>
+        <td ><button class="button-9" (click)="del(register.id)">Eliminar</button>
         </td>
     </tr>
 </tbody>

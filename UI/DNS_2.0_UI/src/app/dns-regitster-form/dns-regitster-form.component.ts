@@ -43,8 +43,12 @@ export class DNSRegitsterFormComponent implements OnInit {
   AddRegister(){
     const register = this.getRegisterJson();
     console.log(register)
-    this.dns.new(register).subscribe((data) =>{
+    this.dns.new(register).subscribe((data:any) =>{
       console.log(data)
+      alert(data.message)
+      if(data.success){
+        this.router.navigate(['/']);
+      }
     })
   }
 
