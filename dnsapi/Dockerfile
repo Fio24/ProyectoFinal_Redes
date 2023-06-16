@@ -5,5 +5,7 @@ RUN apk add --no-cache python3-dev
 RUN pip install --upgrade pip
 WORKDIR /app
 COPY . /app
+
 RUN pip --no-cache-dir install -r requirements.txt
+EXPOSE 5000
 CMD ["python3", "main.py"]
