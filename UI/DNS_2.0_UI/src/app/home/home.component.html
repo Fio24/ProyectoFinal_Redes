@@ -1,0 +1,22 @@
+<h1>DNS<H1>
+<button class="button-8" routerLink="/new">Nuevo registro</button>
+<table class="table table-bordered">
+<thead>
+    <tr>
+        <th>URL</th>
+        <th>type</th>
+    </tr>
+</thead>
+<tbody>
+    <tr *ngFor="let register of registers; let i = index">
+        <td >{{register.id}}
+        </td>
+        <td >{{register.data.type}}
+        </td>
+        <td ><button class="button-8" routerLink="/edit/{{register.id}}">Editar</button>
+        </td>
+        <td ><button class="button-9" (click)="del(register.id)">Eliminar</button>
+        </td>
+    </tr>
+</tbody>
+</table>
