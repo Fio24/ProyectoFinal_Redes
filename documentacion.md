@@ -1,3 +1,4 @@
+# ProyectoFinal_Redes
 # Proyecto II 
 
 ### Curso: Redes (IC-7602)
@@ -78,6 +79,7 @@ Seguidamente, se realizan varias funciones de procesamiento de consultas DNS, ca
 Finalmente, se definen las rutas que utilizará el API, siendo la principal la ruta de “/api/dns_resolver”, la cual es utilizada para resolver consultas DNS, y  recibe parámetros url (URL consultada) y src (origen de la consulta) mediante una solicitud POST o GET. La función dns_resolver determina el tipo de consulta y utiliza las funciones de procesamiento correspondientes para obtener la dirección del servidor DNS adecuado. Además, se tiene la ruta de “/api/dns_request”, la cual es una ruta para enviar consultas DNS al servidor DNS externo, y recibe una consulta DNS codificada en base64 a través de una solicitud POST, la decodifica, envía la consulta al servidor DNS externo y devuelve la respuesta codificada en base64.
 
 Es importante indicar que el código finaliza ejecutando la aplicación Flask en el host '0.0.0.0', lo que significa que estará disponible para recibir solicitudes en todas las interfaces de red.
+
 
 ### métodos usados por el UI
 Consisten en 5 métodos, que cumplen la funcion de un CRUD sobre los registros que se almacenan en Firebase
@@ -174,6 +176,7 @@ response:
 
 
 ## DNS API
+
 Para verificar el funcionamiento del DNS API se utilizó Postman, cada prueba consistió en el llamado del método y corroborar que su repuesta fuera adecuada.
 
 ### /getAll
@@ -197,6 +200,7 @@ response:
         {
             "data": {
                 "cr": "1.1.1.1",
+                "jamaica": "420.420.420.420",
                 "type": "geo",
                 "uk": "0.0.0.0"
             },
@@ -317,10 +321,10 @@ response:
 }
 ```
 
-
 ## DNS 2.0 UI
 
-
+El DNS 2.0 UI permite las acciones de consulta, creación, edición, o borrado de los registros del dns. Fué creado sobre el framework Angular. Consta de 3 componentes, los cuales son la pantalla principal, el formulario de creación y el formulario de edición, siendo estos dos muy similares visualmente pero su lógica de funcionamiento es diferente. Además de eso esta aplicación tiene un servicio el cual es utilizado en los 3 componentes el cual se encarga de la comunicación con el backend, en este caso el DNS API, esta comunicación se realiza por medio de HTTP utilizando las operaciones POST, GET, PUT y DELETE.
+ 
 # Conclusiones
 1. Durante el desarrollo del proyecto, se adquirieron habilidades en la implementación de servicios de capa de aplicación sobre protocolos de transporte UDP y TCP(por ejemplo, con el uso del puerto 53 para el DNS interceptor), lo que proporcionó una comprensión más profunda de estos protocolos y su funcionamiento.
 2. La interacción con la documentación formal de redes fue fundamental para comprender las especificaciones y estándares relacionados con el procesamiento de las peticiones DNS, como el RFC-2929.
@@ -346,3 +350,4 @@ response:
 8. Se recomienda para futuras versiones del proyecto, mejorar los mecanismos de manejo de errores en cada componente,ya que esto si se realiza en el proyecto actual, pero aún se podrían dar notificaciones más explícitas sobre lo que está ocurriendo.
 9. Es importante mantener una comunicación constante y clara con el equipo de trabajo, además de dividir las tareas de manera equitativa y coordinando los avances para así asegurar un proceso eficiente en la implementación del proyecto.
 10. Es recomendable llevar control de versiones, para mantener un registro de los cambios realizados y facilitar la colaboración entre los miembros del equipo.
+
