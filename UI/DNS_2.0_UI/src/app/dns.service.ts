@@ -12,13 +12,14 @@ export class DnsService {
 
   getAll(){
     return this.httpClient
-    .get("/api/getAll")
+    //.get("/api/getAll")
+    .get("http://localhost:8080/getAll")
     .pipe(take(1))
   }
 
   new( register:any){
     return this.httpClient
-    .put("/api/new", register)
+    .put("http://localhost:8080/new", register)
     .pipe(take(1))
   }
 
@@ -32,19 +33,19 @@ export class DnsService {
       },
     };
     return this.httpClient
-    .delete("/api/del",options )
+    .delete("http://localhost:8080/del",options )
     .pipe(take(1))
   }
 
   getById(id:string){
     return this.httpClient
-    .get(`/api/get/${id}`)
+    .get(`http://localhost:8080/get/${id}`)
     .pipe(take(1))
   }
 
   update( register:any){
     return this.httpClient
-    .post("/api/update", register)
+    .post("http://localhost:8080/update", register)
     .pipe(take(1))
   }
 }

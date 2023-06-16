@@ -3,6 +3,7 @@ import dns.query
 import csv
 import ipaddress
 import time
+from flask_cors import CORS
 
 from flask import Flask, jsonify, request
 import json
@@ -11,6 +12,7 @@ from firebase_admin import credentials
 from firebase_admin import firestore
 from random import randint
 app = Flask(__name__)
+CORS(app)
 
 cred = credentials.Certificate("serviceAccountKey.json")
 
