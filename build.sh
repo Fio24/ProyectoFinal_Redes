@@ -22,7 +22,7 @@ pwd
 
 #Instala y ejecuta el interceptor
 cd ./dnsInterceptor
-docker-compose up
+docker-compose up --build
 cd ..
 pwd
 
